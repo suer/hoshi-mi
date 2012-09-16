@@ -92,4 +92,3 @@ describe GraphsController do
     }
   end
 end
-
