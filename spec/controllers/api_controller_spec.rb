@@ -8,6 +8,15 @@ describe ApiController do
     graph = Graph.new(:service => 'service', :section => 'section', :name => 'graph', :color => '#0000ff')
     graph.save
     @secret = graph.secret
+    @now = Time.now
+    Time.stub(:now){ @now }
+  end
+
+  def go_to_future(now,&block)
+    t = @now
+    @now += now
+    block.call
+    @now = t
   end
 
   context "post log" do
@@ -21,7 +30,9 @@ describe ApiController do
   context "post double-log" do
     before do
       post :log, :service => 'service', :section => 'section', :graph => 'graph', :secret => @secret, :number => 1
-      post :log, :service => 'service', :section => 'section', :graph => 'graph', :secret => @secret, :number => 2
+      go_to_future(3.hours) do
+        post :log, :service => 'service', :section => 'section', :graph => 'graph', :secret => @secret, :number => 2
+      end
     end
 
     describe "response" do
@@ -35,6 +46,25 @@ describe ApiController do
       }
       it {
         should have(1).logs
+      }
+    end
+
+    describe "precision" do
+      before {
+        Log.delete_all
+        ENV['HOSHI_MI_REALTIME'] =  '1'
+        post :log, :service => 'service', :section => 'section', :graph => 'graph', :secret => @secret, :number => 1
+        go_to_future(1.hour) do
+          post :log, :service => 'service', :section => 'section', :graph => 'graph', :secret => @secret, :number => 2
+        end
+        ENV.delete 'HOSHI_MI_REALTIME'
+      }
+
+      subject {
+        Graph.where(:service => 'service', :section => 'section').first
+      }
+      it {
+        should have(2).logs
       }
     end
   end

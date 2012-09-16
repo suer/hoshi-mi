@@ -13,7 +13,9 @@ class ApiController < ApplicationController
 
     now = Time.now
     # delete today's log
-    Log.delete_all(["graph_id = ? and happened_at >= ? and happened_at <= ?", graph.id, now.beginning_of_day, now.end_of_day])
+    unless ENV['HOSHI_MI_REALTIME']
+      Log.delete_all(["graph_id = ? and happened_at >= ? and happened_at <= ?", graph.id, now.beginning_of_day, now.end_of_day])
+    end
 
     # add log
     log = Log.new(:happened_at => now, :number => params[:number])
