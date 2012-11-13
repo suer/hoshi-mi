@@ -16,9 +16,10 @@ class GraphsController < ApplicationController
   def show
     @graph = Graph.find(params[:id])
     morris = HoshiMi::MorrisGraph.new
-    morris.data = @graph.logs.map {|log| {:x => log.happened_at.strftime("%Y-%m-%d %H:%M"), :y => log.number} }
+    morris.data = @graph.logs_by(:hour).map {|log| {:x => log.happened_at.strftime("%Y-%m-%d %H:%M"), :y => log.number} }
     morris.label = @graph.name
     @graph_js = morris.to_js
+    @resolution = (params[:resolution] || 'hour').downcase.to_sym
 
     respond_to do |format|
       format.html # show.html.erb

@@ -21,6 +21,19 @@ class Graph < ActiveRecord::Base
     super(options)
   end
 
+  def logs_by(resolution)
+    cond = case resolution
+           when :hour
+             'strftime("%Y-%m-%d %H")'
+           when :day
+             'strftime("%Y-%m-%d")'
+           when :month
+             'strftime("%Y-%m")'
+           end
+    xs = logs.group(cond)
+    xs.select([:happened_at, xs.average(:number)])
+  end
+
   private
   def on_create
     self.color = '#0000ff' if self.color.blank?
